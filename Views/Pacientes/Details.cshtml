@@ -1,0 +1,132 @@
+@model ConsultorioApp.Models.Paciente
+
+@{
+    ViewData["Title"] = "Historia Clínica";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Barra Superior de Navegación y Acciones -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index">Pacientes</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Historia Clínica</li>
+                </ol>
+            </nav>
+            <h2>Expediente de: <span class="text-primary">@Model.Apellido, @Model.Nombre</span></h2>
+        </div>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editar Datos</a>
+            <a asp-action="Index" class="btn btn-secondary">Volver al Listado</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna Izquierda: Datos Personales y Antecedentes Ginecológicos -->
+        <div class="col-md-4">
+
+            <!-- Tarjeta de Datos Personales -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Datos Personales</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>DNI:</strong> @Model.Dni</p>
+                    <p class="mb-2"><strong>Fecha de Nacimiento:</strong> @Model.FechaNacimiento.ToShortDateString()</p>
+                    <p class="mb-2"><strong>Teléfono:</strong> @(string.IsNullOrEmpty(Model.Telefono) ? "No registrado" : Model.Telefono)</p>
+                    <p class="mb-2"><strong>Email:</strong> @(string.IsNullOrEmpty(Model.Email) ? "No registrado" : Model.Email)</p>
+                    <p class="mb-0"><strong>Dirección:</strong> @(string.IsNullOrEmpty(Model.Direccion) ? "No registrada" : Model.Direccion)</p>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Antecedentes Gineco-Obstétricos -->
+            <div class="card shadow-sm mb-4 border-info">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Antecedentes Ginecológicos</h5>
+                    <!-- Aquí puedes poner un botón para crear/editar antecedentes en el futuro -->
+                </div>
+                <div class="card-body">
+                    @if (Model.AntecedenteGinecologico != null)
+                    {
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><strong>Menarquia:</strong> @Model.AntecedenteGinecologico.Menarquia años</li>
+                            <li class="mb-2"><strong>FUM (Última regla):</strong> @(Model.AntecedenteGinecologico.Fum.HasValue ? Model.AntecedenteGinecologico.Fum.Value.ToShortDateString() : "No especificada")</li>
+                            <li class="mb-2"><strong>Ritmo Menstrual:</strong> @Model.AntecedenteGinecologico.RitmoMenstrual</li>
+                            <li class="mb-2">
+                                <strong>Fórmula Obstétrica (IGO):</strong>
+                                G: @Model.AntecedenteGinecologico.Gestas |
+                                P: @Model.AntecedenteGinecologico.Partos |
+                                C: @Model.AntecedenteGinecologico.Cesareas |
+                                A: @Model.AntecedenteGinecologico.Abortos
+                            </li>
+                            <li class="mb-2"><strong>Anticonceptivo (MAC):</strong> @Model.AntecedenteGinecologico.MetodoAnticonceptivo</li>
+                            @if (!string.IsNullOrEmpty(Model.AntecedenteGinecologico.Observaciones))
+                            {
+                                <li class="mt-2 text-muted small"><strong>Obs:</strong> @Model.AntecedenteGinecologico.Observaciones</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-3">No se han registrado antecedentes ginecológicos para esta paciente.</p>
+                        <a href="#" class="btn btn-sm btn-outline-info w-100">+ Registrar Antecedentes</a>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Columna Derecha: Historial de Consultas (Timeline / Evoluciones) -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Historial de Consultas y Evoluciones</h5>
+                    <!-- Botón para añadir nueva consulta ligada a esta paciente -->
+                    <a asp-controller="Consultas" asp-action="Create" asp-route-pacienteId="@Model.Id" class="btn btn-light btn-sm text-primary fw-bold">+ Nueva Consulta</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.Consultas != null && Model.Consultas.Any())
+                    {
+                        <div class="accordion" id="accordionConsultas">
+                            @foreach (var consulta in Model.Consultas.OrderByDescending(c => c.FechaConsulta))
+                            {
+                                <div class="accordion-item mb-3 border">
+                                    <h2 class="accordion-header" id="heading@(consulta.Id)">
+                                        <button class="accordion-button collapsed bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(consulta.Id)" aria-expanded="false" aria-controls="collapse@(consulta.Id)">
+                                            <div class="d-flex w-100 justify-content-between me-3">
+                                                <span><strong>Fecha:</strong> @consulta.FechaConsulta.ToString("dd/MM/yyyy HH:mm")</span>
+                                                <span class="text-muted">Motivo: @consulta.MotivoConsulta</span>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse@(consulta.Id)" class="accordion-collapse collapse" aria-labelledby="heading@(consulta.Id)" data-bs-parent="#accordionConsultas">
+                                        <div class="accordion-body">
+                                            <p><strong>Síntomas / Examen Físico:</strong> <br /> @consulta.Sintomas</p>
+                                            <hr />
+                                            <p><strong>Diagnóstico:</strong> <br /> <span class="text-danger">@consulta.Diagnostico</span></p>
+                                            <hr />
+                                            <p><strong>Tratamiento / Receta:</strong> <br /> @consulta.Tratamiento</p>
+                                            @if (!string.IsNullOrEmpty(consulta.Observaciones))
+                                            {
+                                                <hr />
+                                                <p class="text-muted mb-0"><strong>Observaciones:</strong> @consulta.Observaciones</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <p class="text-muted">Aún no se han registrado consultas médicas para esta paciente.</p>
+                            <a asp-controller="Consultas" asp-action="Create" asp-route-pacienteId="@Model.Id" class="btn btn-primary btn-sm">Registrar la primera consulta</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
